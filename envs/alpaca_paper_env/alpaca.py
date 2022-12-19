@@ -16,7 +16,7 @@ logging.basicConfig(level=logging.INFO)
 class AlpacaPaperEnv(gym.Env):
     ALPACA_KEY = 'PKC214N339W3NI6YKQAS'
     ALPACA_SECRET = 'kQRkSroM697t5kVeZMokM8jyavgTObBnWLBBrk6w'
-
+    order_id =''
     def __init__(self, alpaca_info):
         super(AlpacaPaperEnv, self).__init__()
         self.alpac_info = alpaca_info
@@ -43,7 +43,9 @@ class AlpacaPaperEnv(gym.Env):
             "start_price": 0,
             "orderid": "",
             "status": account.status,
-            "qt": 0
+            "qt": 0,
+            'order': None,
+            'current_trade': ''
         }
         logging.info('Environment initialized')
 
@@ -63,11 +65,12 @@ class AlpacaPaperEnv(gym.Env):
         return observation, reward, done, info
 
     def reset(self):
+        self.api.cancel_all_orders()
         self.api.close_all_positions()
         observation = next(self._get_obs())
         self.renderone(observation)
         info = self._get_info()
-
+        self.info['current_trade'] = ''
         logging.info('Environment reset')
 
         return observation, info
@@ -83,16 +86,24 @@ class AlpacaPaperEnv(gym.Env):
             yield d
 
     def _get_info(self):
+        self.info['portfolio'] = self.api.list_positions()
         return self.info
 
     def _trade(self, _side):
-        self.api.submit_order(
-            symbol=self.alpac_info["symbol"],
-            side=_side,
-            type='market',
-            qty=self.alpac_info["qt"],
-            time_in_force='day'
-        )
+        if self.info['current_trade'] == '':
+            order = self.api.submit_order(
+                symbol=self.alpac_info["symbol"],
+                side=_side,
+                type='market',
+                qty=self.alpac_info["qt"],
+                time_in_force='day'
+            )
+            self.info['current_trade'] = _side
+            self.info['order'] = order
+        else:
+            self.api.close_position(self.info['symbol'],self.info['qt'])
+            self.info['current_trade'] = ''
+            self.isdone = True
 
     def _get_account_balance(self):
         return self.account.cash
