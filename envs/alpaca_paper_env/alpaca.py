@@ -37,6 +37,7 @@ class AlpacaPaperEnv(gym.Env):
         self.api = api
         self.account = account
         self.info = {
+            "symbol":alpaca_info['symbol'],
             "start_balance": self._get_account_balance(),
             "current_balance": self._get_account_balance(),
             "gain": 0,
@@ -100,8 +101,10 @@ class AlpacaPaperEnv(gym.Env):
             )
             self.info['current_trade'] = _side
             self.info['order'] = order
+            self.order_id = order.id
         else:
-            self.api.close_position(self.info['symbol'],self.info['qt'])
+            order_id = self.order_id
+            self.api.cancel_order(order_id)
             self.info['current_trade'] = ''
             self.isdone = True
 

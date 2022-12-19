@@ -23,4 +23,4 @@ for _ in range(Episodes):
             print(reward)
             print(count)
 
-obs, rew, d, info = env.step(1)
+
