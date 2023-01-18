@@ -1,12 +1,11 @@
 import gym
+from configparser import ConfigParser
 import envs
 
-env = gym.make('Alpaca_Paper-v0', alpaca_info={
-    'symbol': 'AAPL',
-    'start_date': '',
-    'end_date': '',
-    'qt': 1
-})
+configur = ConfigParser()
+conf = configur.read('config.ini')
+
+env = gym.make('Alpaca_Paper-v0', config=conf['auth'])
 
 Episodes = 1
 obs = []
@@ -22,5 +21,3 @@ for _ in range(Episodes):
         if done:
             print(reward)
             print(count)
-
-
